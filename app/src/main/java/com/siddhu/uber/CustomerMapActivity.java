@@ -2,6 +2,7 @@ package com.siddhu.uber;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.FragmentActivity;
 
 import android.content.Intent;
@@ -25,7 +26,7 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 
-public class DriverMapActivity extends FragmentActivity implements OnMapReadyCallback, GoogleApiClient.ConnectionCallbacks,GoogleApiClient.OnConnectionFailedListener, com.google.android.gms.location.LocationListener {
+public class CustomerMapActivity  extends FragmentActivity implements OnMapReadyCallback, GoogleApiClient.ConnectionCallbacks,GoogleApiClient.OnConnectionFailedListener, com.google.android.gms.location.LocationListener {
     private GoogleMap mMap;
     private GoogleApiClient mGoogleApiClient;
 
@@ -38,7 +39,7 @@ public class DriverMapActivity extends FragmentActivity implements OnMapReadyCal
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_driver_map);
+        setContentView(R.layout.activity_customer_map);
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
@@ -49,7 +50,7 @@ public class DriverMapActivity extends FragmentActivity implements OnMapReadyCal
             @Override
             public void onClick(View v) {
                 FirebaseAuth.getInstance().signOut();
-                Intent intent = new Intent(DriverMapActivity.this,MainActivity.class);
+                Intent intent = new Intent(CustomerMapActivity.this,MainActivity.class);
                 startActivity(intent);
                 finish();
             }
@@ -80,13 +81,13 @@ public class DriverMapActivity extends FragmentActivity implements OnMapReadyCal
         LatLng latLng = new LatLng(location.getLatitude(),location.getLongitude());
         mMap.moveCamera(CameraUpdateFactory.newLatLng(latLng));
         mMap.animateCamera(CameraUpdateFactory.zoomTo(11));
-
-        //writing location to the database
-         String userId = FirebaseAuth.getInstance().getCurrentUser().getUid();
-        DatabaseReference ref = FirebaseDatabase.getInstance().getReference("DriverseAvailable");
-
-        GeoFire geoFire = new GeoFire(ref);
-        geoFire.setLocation(userId,new GeoLocation(location.getLatitude(),location.getLongitude()));
+//
+//        //writing location to the database
+//        String userId = FirebaseAuth.getInstance().getCurrentUser().getUid();
+//        DatabaseReference ref = FirebaseDatabase.getInstance().getReference("DriverseAvailable");
+//
+//        GeoFire geoFire = new GeoFire(ref);
+//        geoFire.setLocation(userId,new GeoLocation(location.getLatitude(),location.getLongitude()));
 
 
     }
@@ -117,11 +118,5 @@ public class DriverMapActivity extends FragmentActivity implements OnMapReadyCal
     @Override
     protected void onStop() {
         super.onStop();
-
-        String userId = FirebaseAuth.getInstance().getCurrentUser().getUid();
-        DatabaseReference ref = FirebaseDatabase.getInstance().getReference("DriverseAvailable");
-
-        GeoFire geoFire = new GeoFire(ref);
-        geoFire.removeLocation(userId);
     }
 }
