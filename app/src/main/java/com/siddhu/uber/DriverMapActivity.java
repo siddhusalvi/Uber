@@ -8,6 +8,8 @@ import android.location.Location;
 import android.location.LocationListener;
 import android.os.Bundle;
 
+import com.firebase.geofire.GeoFire;
+import com.firebase.geofire.GeoLocation;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.Api;
 import com.google.android.gms.common.api.GoogleApi;
@@ -22,6 +24,9 @@ import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
 
 import java.util.concurrent.TimeUnit;
 
@@ -64,6 +69,15 @@ public class DriverMapActivity extends FragmentActivity implements OnMapReadyCal
         LatLng latLng = new LatLng(location.getLatitude(),location.getLongitude());
         mMap.moveCamera(CameraUpdateFactory.newLatLng(latLng));
         mMap.animateCamera(CameraUpdateFactory.zoomTo(11));
+
+        //writing location to the database
+         String userId = FirebaseAuth.getInstance().getCurrentUser().getUid();
+        DatabaseReference ref = FirebaseDatabase.getInstance().getReference("DriverseAvailable");
+
+        GeoFire geoFire = new GeoFire(ref);
+        geoFire.setLocation(userId,new GeoLocation(location.getLatitude(),location.getLongitude()));
+
+
     }
 
     @Override
@@ -87,5 +101,16 @@ public class DriverMapActivity extends FragmentActivity implements OnMapReadyCal
     @Override
     public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
 
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+
+        String userId = FirebaseAuth.getInstance().getCurrentUser().getUid();
+        DatabaseReference ref = FirebaseDatabase.getInstance().getReference("DriverseAvailable");
+
+        GeoFire geoFire = new GeoFire(ref);
+        geoFire.removeLocation(userId);
     }
 }
