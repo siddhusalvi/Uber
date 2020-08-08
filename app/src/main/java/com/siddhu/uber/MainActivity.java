@@ -6,6 +6,7 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
+import android.widget.Toast;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -22,12 +23,23 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 Intent intent = new Intent(MainActivity.this,DriverLoginActivity.class);
+                Toast.makeText(getApplicationContext(),"Starting new activity",Toast.LENGTH_SHORT).show();
                 startActivity(intent);
-                finish();
-                return;
+//                finish();
+//                return;
             }
         });
 
+        mCustomer.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(MainActivity.this,CustomerLoginActivity.class);
+                startActivity(intent);
+//                finish();
+//                return;
+
+            }
+        });
 
 
     }

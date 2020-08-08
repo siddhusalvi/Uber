@@ -15,7 +15,7 @@
     <Button
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="I am driver"
+        android:text="I am customer"
         android:id="@+id/customer"></Button>
 
 

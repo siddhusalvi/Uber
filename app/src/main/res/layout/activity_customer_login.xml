@@ -29,5 +29,5 @@
         android:id="@+id/registration"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="registration"></Button>
+        android:text="Registration"></Button>
 </LinearLayout>
