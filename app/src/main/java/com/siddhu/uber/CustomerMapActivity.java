@@ -22,6 +22,7 @@ import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
@@ -31,6 +32,8 @@ public class CustomerMapActivity  extends FragmentActivity implements OnMapReady
     private GoogleApiClient mGoogleApiClient;
 
     private Button mLogout;
+    private Button mRequest;
+    private LatLng mpickupLocation;
 
     Location mLastLocation;
     LocationRequest mLocatonRequest;
@@ -45,7 +48,9 @@ public class CustomerMapActivity  extends FragmentActivity implements OnMapReady
                 .findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
 
+        mRequest = findViewById(R.id.request);
         mLogout = findViewById(R.id.logout);
+
         mLogout.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -53,6 +58,19 @@ public class CustomerMapActivity  extends FragmentActivity implements OnMapReady
                 Intent intent = new Intent(CustomerMapActivity.this,MainActivity.class);
                 startActivity(intent);
                 finish();
+            }
+        });
+
+        mRequest.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                String userId = FirebaseAuth.getInstance().getCurrentUser().getUid();
+                DatabaseReference ref = FirebaseDatabase.getInstance().getReference("customerRequest");
+                GeoFire geoFire = new GeoFire(ref);
+                geoFire.setLocation(userId,new GeoLocation(mLastLocation.getLatitude(),mLastLocation.getLongitude()));
+                mpickupLocation = new LatLng(mLastLocation.getLatitude(),mLastLocation.getLongitude());
+                mMap.addMarker(new MarkerOptions().position(mpickupLocation).title("pickup here"));
+                mRequest.setText("Getting you driver ");
             }
         });
 
