@@ -13,6 +13,8 @@ import android.widget.Button;
 
 import com.firebase.geofire.GeoFire;
 import com.firebase.geofire.GeoLocation;
+import com.firebase.geofire.GeoQuery;
+import com.firebase.geofire.GeoQueryEventListener;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.location.LocationRequest;
@@ -24,6 +26,7 @@ import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 
@@ -35,8 +38,14 @@ public class CustomerMapActivity  extends FragmentActivity implements OnMapReady
     private Button mRequest;
     private LatLng mpickupLocation;
 
+    private double radius = 1;
+    private boolean driverFound = false;
+    private String drvierFoundId;
+
     Location mLastLocation;
     LocationRequest mLocatonRequest;
+
+
 
 
     @Override
@@ -71,9 +80,50 @@ public class CustomerMapActivity  extends FragmentActivity implements OnMapReady
                 mpickupLocation = new LatLng(mLastLocation.getLatitude(),mLastLocation.getLongitude());
                 mMap.addMarker(new MarkerOptions().position(mpickupLocation).title("pickup here"));
                 mRequest.setText("Getting you driver ");
+                getClosestDriver();
             }
         });
 
+    }
+
+    //creating radius and getting nearest driver
+    private void getClosestDriver(){
+        DatabaseReference driverLocations = FirebaseDatabase.getInstance().getReference().child("driverAvailable");
+        GeoFire geoFire = new GeoFire(driverLocations);
+        GeoQuery geoQuery = geoFire.queryAtLocation(new GeoLocation(mpickupLocation.latitude,mpickupLocation.longitude),radius);
+        geoQuery.removeAllListeners();
+
+        geoQuery.addGeoQueryEventListener(new GeoQueryEventListener() {
+            @Override
+            public void onKeyEntered(String key, GeoLocation location) {
+                if (!driverFound) {
+                    driverFound = true;
+                    drvierFoundId = key;
+                }
+            }
+            @Override
+            public void onKeyExited(String key) {
+
+            }
+
+            @Override
+            public void onKeyMoved(String key, GeoLocation location) {
+
+            }
+
+            @Override
+            public void onGeoQueryReady() {
+                if(!driverFound){
+                    radius = radius + 1.0;
+                    getClosestDriver();
+                }
+            }
+
+            @Override
+            public void onGeoQueryError(DatabaseError error) {
+
+            }
+        });
     }
 
     @Override
