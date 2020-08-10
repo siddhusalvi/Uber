@@ -83,7 +83,7 @@ public class DriverMapActivity extends FragmentActivity implements OnMapReadyCal
 
         //writing location to the database
          String userId = FirebaseAuth.getInstance().getCurrentUser().getUid();
-        DatabaseReference ref = FirebaseDatabase.getInstance().getReference("DriverseAvailable");
+        DatabaseReference ref = FirebaseDatabase.getInstance().getReference("DriversAvailable");
 
         GeoFire geoFire = new GeoFire(ref);
         geoFire.setLocation(userId,new GeoLocation(location.getLatitude(),location.getLongitude()));
