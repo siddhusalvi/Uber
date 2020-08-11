@@ -42,7 +42,7 @@ public class CustomerMapActivity  extends FragmentActivity implements OnMapReady
 
     private Button mLogout;
     private Button mRequest;
-    private LatLng mpickupLocation;
+    private LatLng mPickupLocation;
 
     private double radius = 1;
     private boolean driverFound = false;
@@ -85,8 +85,8 @@ public class CustomerMapActivity  extends FragmentActivity implements OnMapReady
                 DatabaseReference ref = FirebaseDatabase.getInstance().getReference("customerRequest");
                 GeoFire geoFire = new GeoFire(ref);
                 geoFire.setLocation(userId,new GeoLocation(mLastLocation.getLatitude(),mLastLocation.getLongitude()));
-                mpickupLocation = new LatLng(mLastLocation.getLatitude(),mLastLocation.getLongitude());
-                mMap.addMarker(new MarkerOptions().position(mpickupLocation).title("pickup here"));
+                mPickupLocation = new LatLng(mLastLocation.getLatitude(),mLastLocation.getLongitude());
+                mMap.addMarker(new MarkerOptions().position(mPickupLocation).title("pickup here"));
                 mRequest.setText("Getting you driver ");
                 getClosestDriver();
             }
@@ -98,7 +98,7 @@ public class CustomerMapActivity  extends FragmentActivity implements OnMapReady
     private void getClosestDriver(){
         DatabaseReference driverLocations = FirebaseDatabase.getInstance().getReference().child("driversAvailable");
         GeoFire geoFire = new GeoFire(driverLocations);
-        GeoQuery geoQuery = geoFire.queryAtLocation(new GeoLocation(mpickupLocation.latitude,mpickupLocation.longitude),radius);
+        GeoQuery geoQuery = geoFire.queryAtLocation(new GeoLocation(mPickupLocation.latitude, mPickupLocation.longitude),radius);
         geoQuery.removeAllListeners();
 
         geoQuery.addGeoQueryEventListener(new GeoQueryEventListener() {
@@ -142,6 +142,18 @@ public class CustomerMapActivity  extends FragmentActivity implements OnMapReady
                             if(mDriveMarker != null){
                                 mDriveMarker.remove();
                             }
+                            Location loc1 = new Location("");
+                            loc1.setLatitude(mPickupLocation.latitude);
+                            loc1.setLongitude(mPickupLocation.longitude);
+
+
+                            Location loc2 = new Location("");
+                            loc1.setLatitude(driverLatlang.latitude);
+                            loc1.setLongitude(driverLatlang.longitude);
+
+                            float distance = loc1.distanceTo(loc2);
+                            mRequest.setText("Driver found " + String.valueOf(distance));
+
                             mDriveMarker = mMap.addMarker(new MarkerOptions().position(driverLatlang).title("Your Driver"));
                         }
                     }

@@ -74,16 +74,16 @@ public class DriverMapActivity extends FragmentActivity implements OnMapReadyCal
     //attached listener that will detect chanages made on firebaseDB and driver will get notified
     private void getAssignedCustomer(){
         String driverId = FirebaseAuth.getInstance().getCurrentUser().getUid();
-        DatabaseReference assignedCustomerRef = FirebaseDatabase.getInstance().getReference().child("Users").child("Drivers").child(driverId);
+        DatabaseReference assignedCustomerRef = FirebaseDatabase.getInstance().getReference().child("Users").child("Drivers").child(driverId).child("customerRideId");
         assignedCustomerRef.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 if(snapshot.exists()){
-                    Map<String ,Object> map = (Map<String, Object>) snapshot.getValue();
-                    if(map.get("customerRideId") != null){
-                        customerId = map.get("customerRideId").toString();
+//                    Map<String ,Object> map = (Map<String, Object>) snapshot.getValue();
+//                    if(map.get("customerRideId") != null){
+                        customerId = snapshot.getValue().toString();
                         getAssignedCustomerPickupLocation();
-                    }
+//                    }
                 }
             }
 
