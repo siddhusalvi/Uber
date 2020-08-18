@@ -37,6 +37,7 @@ public class CustomerLoginActivity extends AppCompatActivity {
                 FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
                 if(user != null){
                     Intent intent = new Intent(CustomerLoginActivity.this,CustomerMapActivity.class);
+                    Toast.makeText(getApplicationContext(),"Starting customer map",Toast.LENGTH_SHORT).show();
                     startActivity(intent);
                     finish();
                     return;
