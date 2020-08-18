@@ -57,7 +57,7 @@ public class DriverMapActivity extends FragmentActivity implements OnMapReadyCal
 
         mLogout = findViewById(R.id.logout);
         Log.i("onCreate"," methood");
-        Toast.makeText(getApplicationContext(),"In oncreate method",Toast.LENGTH_SHORT).show();
+        Toast.makeText(getApplicationContext(),"In onCreate method",Toast.LENGTH_SHORT).show();
         getAssignedCustomer();
 
 
@@ -78,8 +78,10 @@ public class DriverMapActivity extends FragmentActivity implements OnMapReadyCal
     private void getAssignedCustomer(){
         Toast.makeText(getApplicationContext(),"Getting assigned customer",Toast.LENGTH_SHORT).show();
         Log.i("in","getAssignedCustomer");
+
         String driverId = FirebaseAuth.getInstance().getCurrentUser().getUid();
         Log.i("driverid",driverId);
+
         DatabaseReference assignedCustomerRef = FirebaseDatabase.getInstance().getReference().child("Users").child("Drivers").child(driverId).child("customerRideId");
         assignedCustomerRef.addValueEventListener(new ValueEventListener() {
             @Override
@@ -108,8 +110,10 @@ public class DriverMapActivity extends FragmentActivity implements OnMapReadyCal
                 Log.i("onDataChanged","called");
                 if(snapshot.exists()){
                     List<Object> map = (List<Object>)snapshot.getValue();
-                    double locationLang , locationLat;
-                    locationLang = locationLat = 0;
+                    double locationLang ;
+                    double locationLat;
+                    locationLang = 0;
+                    locationLat = 0;
                     if(map.get(0) != null){
                         locationLat = Double.parseDouble(map.get(0).toString());
                     }
@@ -146,12 +150,12 @@ public class DriverMapActivity extends FragmentActivity implements OnMapReadyCal
     }
     @Override
     public void onLocationChanged(Location location) {
-//        if(getApplicationContext() != null) {
+        if(getApplicationContext() != null) {
             Toast.makeText(getApplicationContext(),"driver location updateing OnLocationChanged",Toast.LENGTH_SHORT).show();
             mLastLocation = location;
             LatLng latLng = new LatLng(location.getLatitude(), location.getLongitude());
             mMap.moveCamera(CameraUpdateFactory.newLatLng(latLng));
-            mMap.animateCamera(CameraUpdateFactory.zoomTo(19));
+            mMap.animateCamera(CameraUpdateFactory.zoomTo(30));
 
             //writing location to the database
             String userId = FirebaseAuth.getInstance().getCurrentUser().getUid();
@@ -164,25 +168,25 @@ public class DriverMapActivity extends FragmentActivity implements OnMapReadyCal
 
             switch (customerId){
                 case "":
-                    Toast.makeText(getApplicationContext(),"CustomerId "+customerId,Toast.LENGTH_SHORT).show();
+                    Toast.makeText(getApplicationContext(),"I am available"+customerId,Toast.LENGTH_SHORT).show();
 
                     geoFireWorking.removeLocation(userId);
                     geoFireAvailable.setLocation(userId, new GeoLocation(location.getLatitude(), location.getLongitude()));
                     break;
                 default:
                     geoFireAvailable.removeLocation(userId);
-                    Toast.makeText(getApplicationContext(),"CustomerId "+customerId,Toast.LENGTH_SHORT).show();
+                    Toast.makeText(getApplicationContext(),"I am working "+customerId,Toast.LENGTH_SHORT).show();
                     geoFireWorking.setLocation(userId, new GeoLocation(location.getLatitude(), location.getLongitude()));
                     break;
             }
-//        }
-    }
+        }
+     }
 
     @Override
     public void onConnected(@Nullable Bundle bundle) {
         mLocatonRequest = new LocationRequest();
-        mLocatonRequest.setInterval(1000);
-        mLocatonRequest.setFastestInterval(1000);
+        mLocatonRequest.setInterval(5000);
+        mLocatonRequest.setFastestInterval(5000);
         mLocatonRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
 
         //check permission here
