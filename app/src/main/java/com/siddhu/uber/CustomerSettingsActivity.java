@@ -166,24 +166,14 @@ public class CustomerSettingsActivity extends AppCompatActivity {
 
                         }
                     });
-
-
-
-
                 }
             });
-
         }else {
             finish();
         }
 
-
-
         finish();
     }
-
-
-
 
     private void getUserInfo(){
         mCustomerDatabase.addValueEventListener(new ValueEventListener() {
