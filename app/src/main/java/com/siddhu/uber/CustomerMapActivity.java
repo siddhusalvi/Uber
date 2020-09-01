@@ -9,6 +9,7 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.location.Location;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.Toast;
@@ -19,6 +20,7 @@ import com.firebase.geofire.GeoQuery;
 import com.firebase.geofire.GeoQueryEventListener;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.common.api.Status;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.CameraUpdateFactory;
@@ -29,15 +31,23 @@ import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.android.libraries.places.api.Places;
+import com.google.android.libraries.places.api.model.Place;
+import com.google.android.libraries.places.api.net.PlacesClient;
+import com.google.android.libraries.places.widget.AutocompleteSupportFragment;
+import com.google.android.libraries.places.widget.listener.PlaceSelectionListener;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
+import com.google.firebase.database.annotations.NotNull;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 
 public class CustomerMapActivity  extends FragmentActivity implements OnMapReadyCallback, GoogleApiClient.ConnectionCallbacks,GoogleApiClient.OnConnectionFailedListener, com.google.android.gms.location.LocationListener {
 
@@ -51,6 +61,21 @@ public class CustomerMapActivity  extends FragmentActivity implements OnMapReady
     private Boolean requestBol = false;
     private Marker pickupMarker;
 
+    String destination = "not available";
+
+    private boolean mLoadMapFlag = true;
+
+    private int radius = 1;
+    private Boolean driverFound = false;
+    private String driverFoundID;
+    String userId;
+    GeoQuery geoQuery;
+
+    private Marker mDriverMarker;
+
+    private DatabaseReference driverLocationRef;
+    private ValueEventListener driverLocationRefListener;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -60,10 +85,43 @@ public class CustomerMapActivity  extends FragmentActivity implements OnMapReady
                 .findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
 
+        // Initialize the SDK
+//        Places.initialize(getApplicationContext(),"dfasgsdgsdfgsdgsdghsdgsa");
+//        // Create a new PlacesClient instance
+//        PlacesClient placesClient = Places.createClient(this);
+//
+//        // Initialize the AutocompleteSupportFragment.
+//        AutocompleteSupportFragment autocompleteFragment = (AutocompleteSupportFragment)
+//                getSupportFragmentManager().findFragmentById(R.id.autocomplete_fragment);
+//
+//        // Specify the types of place data to return.
+//        autocompleteFragment.setPlaceFields(Arrays.asList(Place.Field.ID, Place.Field.NAME));
+//
+//        // Set up a PlaceSelectionListener to handle the response.
+//        autocompleteFragment.setOnPlaceSelectedListener(new PlaceSelectionListener() {
+//            @Override
+//            public void onPlaceSelected(@NotNull Place place) {
+//                // TODO: Get info about the selected place.
+//                destination = place.getName().toString();
+////                Log.i(TAG, "Place: " + place.getName() + ", " + place.getId());
+//            }
+//
+//            @Override
+//            public void onError(@NotNull Status status) {
+//                // TODO: Handle the error.
+////                Log.i(TAG, "An error occurred: " + status);
+//                Toast.makeText(getApplicationContext(),status.toString(),Toast.LENGTH_LONG).show();
+//            }
+//        });
+
+
 
         mLogout = (Button) findViewById(R.id.logout);
         mRequest = (Button) findViewById(R.id.request);
         mSettings = (Button) findViewById(R.id.settings);
+
+
+
         mLogout.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -81,11 +139,17 @@ public class CustomerMapActivity  extends FragmentActivity implements OnMapReady
                 if(requestBol){
                     requestBol = false;
                     geoQuery.removeAllListeners();
-                    driverLocationRef.removeEventListener(driverLocationRefListener);
+                    if(driverLocationRef != null) {
+                        driverLocationRef.removeEventListener(driverLocationRefListener);
+                    }
+
                     String userId = FirebaseAuth.getInstance().getCurrentUser().getUid();
-                    DatabaseReference ref = FirebaseDatabase.getInstance().getReference("customerRequest");
-                    GeoFire geoFire = new GeoFire(ref);
-                    geoFire.removeLocation(userId);
+                    DatabaseReference ref = FirebaseDatabase.getInstance().getReference().child("customerRequest");
+                    if(ref != null) {
+                        GeoFire geoFire = new GeoFire(ref);
+                        geoFire.removeLocation(userId);
+                    }
+
                     if(driverFoundID != null){
                         DatabaseReference driverRef = FirebaseDatabase.getInstance().getReference().child("Users").child("Drivers").child(driverFoundID);
                         driverRef.setValue(true);
@@ -97,6 +161,11 @@ public class CustomerMapActivity  extends FragmentActivity implements OnMapReady
                         pickupMarker.remove();
                     }
                     mRequest.setText("call uber");
+
+                    if(mDriverMarker != null){
+                        mDriverMarker.remove();
+                    }
+
                 }else{
                     requestBol = true;
                     String userId = FirebaseAuth.getInstance().getCurrentUser().getUid();
@@ -123,15 +192,56 @@ public class CustomerMapActivity  extends FragmentActivity implements OnMapReady
                 return;
             }
         });
+
+
+
     }
-    private int radius = 1;
-    private Boolean driverFound = false;
-    private String driverFoundID;
-    GeoQuery geoQuery;
+
+
+    @Override
+    public void onMapReady(GoogleMap googleMap) {
+        mMap = googleMap;
+        if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            return;
+        }
+        buildGoogleApiClient();
+        mMap.setMyLocationEnabled(true);
+        mRequest.setVisibility(View.VISIBLE);
+    }
+
+    protected synchronized void buildGoogleApiClient(){
+        mGoogleApiClient = new GoogleApiClient.Builder(this)
+                .addConnectionCallbacks(this)
+                .addOnConnectionFailedListener(this)
+                .addApi(LocationServices.API)
+                .build();
+        mGoogleApiClient.connect();
+    }
+
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        if(requestBol){
+            getClosestDriver();
+        }
+
+        if(!mLoadMapFlag) {
+            String msg = "onResume";
+            message(msg);
+            buildGoogleApiClient();
+            onLocationChanged(mLastLocation);
+        }
+    }
+
+
+
+
     private void getClosestDriver(){
         DatabaseReference driverLocation = FirebaseDatabase.getInstance().getReference().child("driversAvailable");
         GeoFire geoFire = new GeoFire(driverLocation);
         geoQuery = geoFire.queryAtLocation(new GeoLocation(pickupLocation.latitude, pickupLocation.longitude), radius);
+
         geoQuery.removeAllListeners();
 
         geoQuery.addGeoQueryEventListener(new GeoQueryEventListener() {
@@ -145,10 +255,10 @@ public class CustomerMapActivity  extends FragmentActivity implements OnMapReady
                     String customerId = FirebaseAuth.getInstance().getCurrentUser().getUid();
                     HashMap map = new HashMap();
                     map.put("customerRideId", customerId);
+                    map.put("destination", destination);
                     driverRef.updateChildren(map);
-
-                    getDriverLocation();
                     mRequest.setText("Looking for Driver Location....");
+                    getDriverLocation();
 
                 }
             }
@@ -178,11 +288,6 @@ public class CustomerMapActivity  extends FragmentActivity implements OnMapReady
             }
         });
     }
-    private Marker mDriverMarker;
-
-    private DatabaseReference driverLocationRef;
-    private ValueEventListener driverLocationRefListener;
-
     private void getDriverLocation(){
         driverLocationRef = FirebaseDatabase.getInstance().getReference().child("driversWorking").child(driverFoundID).child("l");
         driverLocationRefListener = driverLocationRef.addValueEventListener(new ValueEventListener() {
@@ -232,25 +337,7 @@ public class CustomerMapActivity  extends FragmentActivity implements OnMapReady
     }
 
 
-    @Override
-    public void onMapReady(GoogleMap googleMap) {
-        mMap = googleMap;
 
-        if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            return;
-        }
-        buildGoogleApiClient();
-        mMap.setMyLocationEnabled(true);
-    }
-
-    protected synchronized void buildGoogleApiClient(){
-        mGoogleApiClient = new GoogleApiClient.Builder(this)
-                .addConnectionCallbacks(this)
-                .addOnConnectionFailedListener(this)
-                .addApi(LocationServices.API)
-                .build();
-        mGoogleApiClient.connect();
-    }
 
     @Override
     public void onLocationChanged(Location location) {
@@ -259,8 +346,18 @@ public class CustomerMapActivity  extends FragmentActivity implements OnMapReady
 
             LatLng latLng = new LatLng(location.getLatitude(),location.getLongitude());
 
-            mMap.moveCamera(CameraUpdateFactory.newLatLng(latLng));
-            mMap.animateCamera(CameraUpdateFactory.zoomTo(11));
+
+            userId = FirebaseAuth.getInstance().getCurrentUser().getUid();
+            if(requestBol) {
+                DatabaseReference mCustomerDatabaseRef = FirebaseDatabase.getInstance().getReference().child("customerRequest");
+                GeoFire geoFireCustomerRequest = new GeoFire(mCustomerDatabaseRef);
+                geoFireCustomerRequest.setLocation(userId, new GeoLocation(location.getLatitude(), location.getLongitude()));
+            }
+            if(mLoadMapFlag) {
+                mMap.moveCamera(CameraUpdateFactory.newLatLng(latLng));
+                mMap.animateCamera(CameraUpdateFactory.zoomTo(11));
+                mLoadMapFlag = false;
+            }
         }
     }
 
@@ -287,6 +384,20 @@ public class CustomerMapActivity  extends FragmentActivity implements OnMapReady
 
     @Override
     protected void onStop() {
+        DatabaseReference mCustomerDatabaseRef = FirebaseDatabase.getInstance().getReference().child("customerRequest");
+        GeoFire geoFireCustomerRequest = new GeoFire(mCustomerDatabaseRef);
+        geoFireCustomerRequest.removeLocation(userId);
         super.onStop();
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+
+    }
+
+    public void message(String msg){
+//        Snackbar.make(findViewById(android.R.id.content),msg, BaseTransientBottomBar.LENGTH_SHORT).show();
+        Toast.makeText(getApplicationContext(),msg,Toast.LENGTH_SHORT).show();
     }
 }

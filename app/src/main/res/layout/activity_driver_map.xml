@@ -39,6 +39,14 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:id="@+id/cutomerDestination"
+                android:paddingBottom="10sp"
+                android:text="Destination"
+                >
+            </TextView>
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
                 android:id="@+id/cutomerName"
                 android:paddingBottom="10sp"
                 android:paddingTop="20sp"
