@@ -316,7 +316,6 @@ public class DriverMapActivity extends FragmentActivity implements OnMapReadyCal
 
     }
 
-
     @Override
     protected void onStop() {
         super.onStop();
