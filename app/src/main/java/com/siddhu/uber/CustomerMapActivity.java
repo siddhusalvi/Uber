@@ -12,8 +12,12 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
+import android.widget.ImageView;
+import android.widget.LinearLayout;
+import android.widget.TextView;
 import android.widget.Toast;
 
+import com.bumptech.glide.Glide;
 import com.firebase.geofire.GeoFire;
 import com.firebase.geofire.GeoLocation;
 import com.firebase.geofire.GeoQuery;
@@ -48,6 +52,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 
 public class CustomerMapActivity  extends FragmentActivity implements OnMapReadyCallback, GoogleApiClient.ConnectionCallbacks,GoogleApiClient.OnConnectionFailedListener, com.google.android.gms.location.LocationListener {
 
@@ -75,6 +80,11 @@ public class CustomerMapActivity  extends FragmentActivity implements OnMapReady
 
     private DatabaseReference driverLocationRef;
     private ValueEventListener driverLocationRefListener;
+
+
+    private LinearLayout mDriverInfo;
+    private ImageView mDriverProfileImage;
+    private TextView mDriverName, mDriverPhone,mDriverCar;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -121,6 +131,12 @@ public class CustomerMapActivity  extends FragmentActivity implements OnMapReady
         mSettings = (Button) findViewById(R.id.settings);
 
 
+        mDriverInfo = findViewById(R.id.driverInfo);
+        mDriverProfileImage = findViewById(R.id.driverProfileImage);
+        mDriverName = findViewById(R.id.driverName);
+        mDriverPhone = findViewById(R.id.driverPhone);
+        mDriverCar = findViewById(R.id.driverCar);
+
 
         mLogout.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -160,11 +176,21 @@ public class CustomerMapActivity  extends FragmentActivity implements OnMapReady
                     if(pickupMarker != null){
                         pickupMarker.remove();
                     }
-                    mRequest.setText("call uber");
 
                     if(mDriverMarker != null){
                         mDriverMarker.remove();
                     }
+
+                    mDriverInfo.setVisibility(View.GONE);
+                    mDriverName.setText("");
+                    mDriverCar.setText("");
+                    mDriverPhone.setText("");
+                    mDriverProfileImage.setImageResource(R.mipmap.ic_default_user);
+
+
+                    mRequest.setText("call uber");
+
+
 
                 }else{
                     requestBol = true;
@@ -259,6 +285,7 @@ public class CustomerMapActivity  extends FragmentActivity implements OnMapReady
                     driverRef.updateChildren(map);
                     mRequest.setText("Looking for Driver Location....");
                     getDriverLocation();
+                    getDriverInfo();
 
                 }
             }
@@ -334,6 +361,38 @@ public class CustomerMapActivity  extends FragmentActivity implements OnMapReady
             }
         });
 
+    }
+
+
+    private void getDriverInfo(){
+        mDriverInfo.setVisibility(View.VISIBLE);
+        DatabaseReference mCustomerDatabase = FirebaseDatabase.getInstance().getReference().child("Users").child("Drivers").child(driverFoundID);
+        mCustomerDatabase.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                if(snapshot.exists() && snapshot.getChildrenCount() > 0){
+                    Map<String,Object> map = (Map <String,Object>) snapshot.getValue();
+                    if(map.get("name") != null){
+                        mDriverName.setText(map.get("name").toString());
+                    }
+                    if(map.get("phone") != null){
+                        mDriverPhone.setText(map.get("phone").toString());
+                    }
+                    if(map.get("car") != null){
+                        mDriverCar.setText(map.get("car").toString());
+                    }
+                    if(map.get("profileImageUrl") != null){
+                        Glide.with(getApplication()).load(map.get("profileImageUrl").toString()).into(mDriverProfileImage);
+                    }
+
+                }
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+
+            }
+        });
     }
 
 

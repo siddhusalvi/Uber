@@ -1,5 +1,4 @@
 package com.siddhu.uber;
-
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.location.Location;
@@ -10,12 +9,10 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
-
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.app.ActivityCompat;
 import androidx.fragment.app.FragmentActivity;
-
 import com.bumptech.glide.Glide;
 import com.firebase.geofire.GeoFire;
 import com.firebase.geofire.GeoLocation;
@@ -50,7 +47,7 @@ public class DriverMapActivity extends FragmentActivity implements OnMapReadyCal
     LocationRequest mLocationRequest;
     Marker pickUpMarker;
     private GoogleMap mMap;
-    private Button mLogout;
+    private Button mLogout,mSettings;
     private String customerId = "";
     private String destination = "";
     private Boolean isLoggingOut = false;
@@ -82,6 +79,17 @@ public class DriverMapActivity extends FragmentActivity implements OnMapReadyCal
 
 
         mLogout = findViewById(R.id.logout);
+        mSettings = findViewById(R.id.settings);
+
+        mSettings.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(DriverMapActivity.this, DriverSettingsActivity.class);
+                startActivity(intent);
+                return;
+            }
+        });
+
         mLogout.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -110,9 +118,20 @@ public class DriverMapActivity extends FragmentActivity implements OnMapReadyCal
         getAssignedCustomer();
     }
 
+
+
     private void getAssignedCustomer() {
         String driverId = FirebaseAuth.getInstance().getCurrentUser().getUid();
         assignedCustomerRef = FirebaseDatabase.getInstance().getReference().child("Users").child("Drivers").child(driverId).child("customerRideId");
+
+//        assignedCustomerRef.setValue(driverId, new DatabaseReference.CompletionListener() {
+//            @Override
+//            public void onComplete(DatabaseError databaseError, DatabaseReference dataReference) {
+//                message(databaseError.getMessage());
+//            }
+//        });
+
+
         assignedCustomerRef.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
@@ -251,7 +270,7 @@ public class DriverMapActivity extends FragmentActivity implements OnMapReadyCal
             mLastLocation = location;
             LatLng latLng = new LatLng(location.getLatitude(), location.getLongitude());
 
-            String msg = "Location "+latLng.toString()+customerId;
+            String msg = "Location "+latLng.toString();
             message(msg);
 
             //flag to load map first time
@@ -316,6 +335,8 @@ public class DriverMapActivity extends FragmentActivity implements OnMapReadyCal
 
     }
 
+
+
     @Override
     protected void onStop() {
         super.onStop();
@@ -325,8 +346,8 @@ public class DriverMapActivity extends FragmentActivity implements OnMapReadyCal
     }
 
     public void message(String msg){
-//        Snackbar.make(findViewById(android.R.id.content),msg, BaseTransientBottomBar.LENGTH_SHORT).show();
-        Toast.makeText(getApplicationContext(),msg,Toast.LENGTH_SHORT).show();
+        Snackbar.make(findViewById(android.R.id.content),msg, BaseTransientBottomBar.LENGTH_SHORT).show();
+//        Toast.makeText(getApplicationContext(),msg,Toast.LENGTH_SHORT).show();
     }
 }
 /*
