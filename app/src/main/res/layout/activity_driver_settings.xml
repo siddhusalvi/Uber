@@ -38,6 +38,7 @@
     </EditText>
 
 
+
     <EditText
         android:id="@+id/phone"
         android:layout_width="match_parent"
@@ -48,6 +49,39 @@
         android:inputType="number"
         >
     </EditText>
+
+
+    <RadioGroup
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Services"
+        android:id="@+id/radioGroup"
+        android:orientation="horizontal"
+        >
+        <RadioButton
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="small"
+            android:id="@+id/small"
+            android:checked="true"
+            ></RadioButton>
+
+        <RadioButton
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="medium"
+            android:id="@+id/medium"
+            ></RadioButton>
+
+
+        <RadioButton
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="large"
+            android:id="@+id/large"
+            ></RadioButton>
+
+    </RadioGroup>
 
     <Button
         android:layout_width="match_parent"

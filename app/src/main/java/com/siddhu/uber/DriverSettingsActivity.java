@@ -14,6 +14,8 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
+import android.widget.RadioButton;
+import android.widget.RadioGroup;
 import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
@@ -54,6 +56,10 @@ public class DriverSettingsActivity extends AppCompatActivity {
 
     private Uri resultUri;
 
+    private RadioGroup mRadioGroup;
+    int servicetId;
+
+
 
 
     @Override
@@ -75,6 +81,8 @@ public class DriverSettingsActivity extends AppCompatActivity {
 
         userID = mAuth.getCurrentUser().getUid();
         mDriverDatabase = FirebaseDatabase.getInstance().getReference().child("Users").child("Drivers").child(userID);
+
+        mRadioGroup = findViewById(R.id.radioGroup);
 
 
 
@@ -123,6 +131,10 @@ public class DriverSettingsActivity extends AppCompatActivity {
                         mCar = map.get("car").toString();
                         mCarField .setText(mCar);
                     }
+                    if(map.get("service") != null){
+                        servicetId = Integer.valueOf( map.get("service").toString());
+                        mRadioGroup.check(servicetId);
+                    }
                     if(map.get("profileImageUrl") != null){
                         mProfileImageUrl = map.get("profileImageUrl").toString();
                         Glide.with(getApplication()).load(mProfileImageUrl).into(mProfileImage);
@@ -145,11 +157,17 @@ public class DriverSettingsActivity extends AppCompatActivity {
         mName = mNameField.getText().toString();
         mPhone = mPhoneField.getText().toString();
         mCar = mCarField.getText().toString();
+        servicetId = mRadioGroup.getCheckedRadioButtonId();
+
+        final RadioButton mRadioButton = (RadioButton) findViewById(servicetId);
+
+
 
         Map userInfo = new HashMap();
         userInfo.put("name",mName);
         userInfo.put("phone",mPhone);
         userInfo.put("car",mCar);
+        userInfo.put("service",String.valueOf(servicetId));
         mDriverDatabase.updateChildren(userInfo);
 
         if(resultUri !=null){

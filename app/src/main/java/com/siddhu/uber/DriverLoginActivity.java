@@ -74,8 +74,8 @@ public class DriverLoginActivity extends AppCompatActivity {
                         }else{
                             Toast.makeText(getApplicationContext(),"Task is successful",Toast.LENGTH_SHORT).show();
                             String user_id = mAuth.getCurrentUser().getUid();
-                            DatabaseReference current_user_db = FirebaseDatabase.getInstance().getReference().child("Users").child("Drivers").child(user_id);
-                            current_user_db.setValue(true);
+                            DatabaseReference current_user_db = FirebaseDatabase.getInstance().getReference().child("Users").child("Drivers").child(user_id).child("email");
+                            current_user_db.setValue(email);
                         }
                     }
                 });
