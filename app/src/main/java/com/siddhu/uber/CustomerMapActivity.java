@@ -58,7 +58,8 @@ public class CustomerMapActivity extends FragmentActivity implements OnMapReadyC
     private LatLng pickupLocation;
     private Boolean requestBol = false;
     private Marker pickupMarker;
-    private boolean mLoadMapFlag = true;
+    public boolean mLoadMapFlag = false;
+    public boolean mButtonflag = false;
     private int radius = 1;
     private Boolean driverFound = false;
     private String driverFoundID;
@@ -67,6 +68,9 @@ public class CustomerMapActivity extends FragmentActivity implements OnMapReadyC
     private String mDriverNameField = "Name : "+DEFAULT;
     private String mDriverCarField = "CAR : " + DEFAULT;
     private int mDriverPhoneField = 0;
+
+    DatabaseReference mCustomerDatabaseRef;
+    GeoFire geoFireCustomerRequest;
 
 
     private DatabaseReference driverLocationRef;
@@ -192,9 +196,10 @@ public class CustomerMapActivity extends FragmentActivity implements OnMapReadyC
                     requestBol = true;
                     String userId = FirebaseAuth.getInstance().getCurrentUser().getUid();
 
-                    DatabaseReference ref = FirebaseDatabase.getInstance().getReference("customerRequest");
-                    GeoFire geoFire = new GeoFire(ref);
-                    geoFire.setLocation(userId, new GeoLocation(mLastLocation.getLatitude(), mLastLocation.getLongitude()));
+
+                    mCustomerDatabaseRef = FirebaseDatabase.getInstance().getReference().child("customerRequest");
+                    geoFireCustomerRequest = new GeoFire(mCustomerDatabaseRef);
+                    geoFireCustomerRequest.setLocation(userId, new GeoLocation(mLastLocation.getLatitude(), mLastLocation.getLongitude()));
 
                     pickupLocation = new LatLng(mLastLocation.getLatitude(), mLastLocation.getLongitude());
                     pickupMarker = mMap.addMarker(new MarkerOptions().position(pickupLocation).title("Pickup Here"));
@@ -249,7 +254,7 @@ public class CustomerMapActivity extends FragmentActivity implements OnMapReadyC
             getClosestDriver();
         }
 
-        if (!mLoadMapFlag) {
+        if (mLoadMapFlag) {
             String msg = "onResume";
             message(msg,0);
             buildGoogleApiClient();
@@ -403,22 +408,23 @@ public class CustomerMapActivity extends FragmentActivity implements OnMapReadyC
             LatLng latLng = new LatLng(location.getLatitude(), location.getLongitude());
             userId = FirebaseAuth.getInstance().getCurrentUser().getUid();
 
-            if(mLastLocation != null && !mLoadMapFlag){
-                mButtonLayout.setVisibility(View.VISIBLE);
+            if (requestBol) {
+                geoFireCustomerRequest.setLocation(userId, new GeoLocation(location.getLatitude(), location.getLongitude()));
+            }
+            if (!mLoadMapFlag) {
+                message("Updating map",0);
+                mMap.moveCamera(CameraUpdateFactory.newLatLng(latLng));
+                mMap.animateCamera(CameraUpdateFactory.zoomTo(10));
                 mLoadMapFlag = true;
             }
 
 
-            if (requestBol) {
-                DatabaseReference mCustomerDatabaseRef = FirebaseDatabase.getInstance().getReference().child("customerRequest");
-                GeoFire geoFireCustomerRequest = new GeoFire(mCustomerDatabaseRef);
-                geoFireCustomerRequest.setLocation(userId, new GeoLocation(location.getLatitude(), location.getLongitude()));
+            if(mLastLocation != null && !mButtonflag){
+                mButtonLayout.setVisibility(View.VISIBLE);
+                mButtonflag = true;
+
             }
-            if (mLoadMapFlag) {
-                mMap.moveCamera(CameraUpdateFactory.newLatLng(latLng));
-                mMap.animateCamera(CameraUpdateFactory.zoomTo(11));
-                mLoadMapFlag = false;
-            }
+
         }
     }
 
