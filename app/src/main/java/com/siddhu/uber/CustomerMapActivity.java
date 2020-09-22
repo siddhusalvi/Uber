@@ -4,6 +4,7 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.location.Location;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
@@ -54,7 +55,7 @@ public class CustomerMapActivity extends FragmentActivity implements OnMapReadyC
     String userId;
     GeoQuery geoQuery;
     private GoogleMap mMap;
-    private Button mLogout, mRequest, mSettings;
+    private Button mLogout, mRequest, mSettings,mHistory;
     private LatLng pickupLocation;
     private Boolean requestBol = false;
     private Marker pickupMarker;
@@ -130,6 +131,7 @@ public class CustomerMapActivity extends FragmentActivity implements OnMapReadyC
         mLogout = findViewById(R.id.logout);
         mRequest = findViewById(R.id.request);
         mSettings = findViewById(R.id.settings);
+        mHistory = findViewById(R.id.history);
 
 
         mDriverInfo = findViewById(R.id.driverInfo);
@@ -217,14 +219,22 @@ public class CustomerMapActivity extends FragmentActivity implements OnMapReadyC
             public void onClick(View v) {
                 Intent intent = new Intent(CustomerMapActivity.this, CustomerSettingsActivity.class);
                 startActivity(intent);
-                return;
             }
         });
 
+        mHistory.setOnClickListener(
+                new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        Intent intent = new Intent(CustomerMapActivity.this,HistoryActivity.class);
+                        intent.putExtra("customerOrDriver","Customers");
+                        startActivity(intent);
+                    }
+                }
+        );
 
 
     }
-
 
     @Override
     public void onMapReady(GoogleMap googleMap) {
@@ -246,7 +256,6 @@ public class CustomerMapActivity extends FragmentActivity implements OnMapReadyC
         mGoogleApiClient.connect();
     }
 
-
     @Override
     protected void onResume() {
         super.onResume();
@@ -261,7 +270,6 @@ public class CustomerMapActivity extends FragmentActivity implements OnMapReadyC
             onLocationChanged(mLastLocation);
         }
     }
-
 
     private void getClosestDriver() {
         DatabaseReference driverLocation = FirebaseDatabase.getInstance().getReference().child("driversAvailable");
@@ -400,7 +408,6 @@ public class CustomerMapActivity extends FragmentActivity implements OnMapReadyC
         });
     }
 
-
     @Override
     public void onLocationChanged(Location location) {
         if (getApplicationContext() != null) {
@@ -468,6 +475,7 @@ public class CustomerMapActivity extends FragmentActivity implements OnMapReadyC
         if(code == 1 || debugFlag){
 //          Snackbar.make(findViewById(android.R.id.content),msg, BaseTransientBottomBar.LENGTH_SHORT).show();
             Toast.makeText(getApplicationContext(), msg, Toast.LENGTH_SHORT).show();
+            Log.i("Information : ",msg);
         }
     }
 }
