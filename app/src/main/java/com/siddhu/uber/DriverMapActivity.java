@@ -10,8 +10,10 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
+import android.widget.CompoundButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -85,6 +87,10 @@ public class DriverMapActivity extends FragmentActivity implements OnMapReadyCal
     private List<Polyline> polylines;
     private Polyline mPolyline;
     boolean customerFoundFlag = false;
+    Switch workStatus;
+    float rideDistance = 0;
+    Location driverFirstLocation;
+    Button mHistory;
 
 
     @Override
@@ -109,10 +115,11 @@ public class DriverMapActivity extends FragmentActivity implements OnMapReadyCal
         mCustomerName = findViewById(R.id.cutomerName);
         mCustomerPhone = findViewById(R.id.cutomerPhone);
         mCustomerDestination = findViewById(R.id.cutomerDestination);
-
+        mHistory = findViewById(R.id.history);
 
         mLogout = findViewById(R.id.logout);
         mSettings = findViewById(R.id.settings);
+        workStatus = findViewById(R.id.working);
 
         mSettings.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -135,6 +142,28 @@ public class DriverMapActivity extends FragmentActivity implements OnMapReadyCal
                 return;
             }
         });
+
+        workStatus.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                if(isChecked){
+                    connectDriver();
+                }else{
+                    disconnectDriver();
+                }
+            }
+        });
+
+        mHistory.setOnClickListener(
+                new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        Intent intent = new Intent(DriverMapActivity.this,HistoryActivity.class);
+                        intent.putExtra("customerOrDriver","Drivers");
+                        startActivity(intent);
+                    }
+                }
+        );
 
 
     }
@@ -184,7 +213,7 @@ public class DriverMapActivity extends FragmentActivity implements OnMapReadyCal
                     if (assignedCustomerPickupLocationRefListener != null) {
                         assignedCustomerRef.removeEventListener(assignedCustomerPickupLocationRefListener);
                     }
-
+                    rideDistance = 0;
                     mCustomerInfo.setVisibility(View.GONE);
                     mCustomerName.setText("");
                     mCustomerPhone.setText("");
@@ -241,6 +270,12 @@ public class DriverMapActivity extends FragmentActivity implements OnMapReadyCal
         });
     }
 
+    public void connectDriver(){
+        if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            return;
+        }
+        LocationServices.FusedLocationApi.requestLocationUpdates(mGoogleApiClient, mLocationRequest, this);
+    }
 
     private void getAssignedCustomerDestination() {
         String driverId = FirebaseAuth.getInstance().getCurrentUser().getUid();
@@ -317,6 +352,14 @@ public class DriverMapActivity extends FragmentActivity implements OnMapReadyCal
     public void onLocationChanged(Location location) {
         if (getApplicationContext() != null) {
 
+            if(driverFirstLocation ==null){
+                driverFirstLocation = location;
+            }
+
+            if(!customerId.equals("")){
+                 rideDistance += driverFirstLocation.distanceTo(location)/1000;
+            }
+
             mLastLocation = location;
             LatLng latLng = new LatLng(location.getLatitude(), location.getLongitude());
 
@@ -366,10 +409,10 @@ public class DriverMapActivity extends FragmentActivity implements OnMapReadyCal
         mLocationRequest.setFastestInterval(1000);
         mLocationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
 
-        if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            return;
-        }
-        LocationServices.FusedLocationApi.requestLocationUpdates(mGoogleApiClient, mLocationRequest, this);
+//        if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+//            return;
+//        }
+//        LocationServices.FusedLocationApi.requestLocationUpdates(mGoogleApiClient, mLocationRequest, this);
     }
 
     @Override
@@ -431,9 +474,10 @@ public class DriverMapActivity extends FragmentActivity implements OnMapReadyCal
         map.put("location/from/lat",mPickupLocationLatLang.latitude);
         map.put("location/from/lang",mPickupLocationLatLang.longitude);
         //Update due to disables direction api we cannot set drop location
-        map.put("location/to/lat",mPickupLocationLatLang.latitude);
-        map.put("location/to/lang",mPickupLocationLatLang.longitude);
+        map.put("location/to/lat",mMylocationLatLang.latitude);
+        map.put("location/to/lang",mMylocationLatLang.longitude);
         map.put("timestamp",getCurrentTimstamp());
+        map.put("distance",rideDistance);
         historyRef.child(requestID).updateChildren(map);
         customerFoundFlag = false;
     }

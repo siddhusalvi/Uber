@@ -9,6 +9,7 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.RatingBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -54,8 +55,9 @@ public class CustomerMapActivity extends FragmentActivity implements OnMapReadyC
     String destination = "not available";
     String userId;
     GeoQuery geoQuery;
+    RatingBar mRatingBar;
     private GoogleMap mMap;
-    private Button mLogout, mRequest, mSettings,mHistory;
+    private Button mLogout, mRequest, mSettings,mHistory,mSaveRide;
     private LatLng pickupLocation;
     private Boolean requestBol = false;
     private Marker pickupMarker;
@@ -81,7 +83,7 @@ public class CustomerMapActivity extends FragmentActivity implements OnMapReadyC
 
 
     private LinearLayout mDriverInfo;
-    private LinearLayout mButtonLayout;
+    private LinearLayout mButtonLayout,mSaveLayout;
     private ImageView mDriverProfileImage;
     private TextView mDriverName, mDriverPhone, mDriverCar;
 
@@ -127,6 +129,8 @@ public class CustomerMapActivity extends FragmentActivity implements OnMapReadyC
 //        });
 
         mButtonLayout = findViewById(R.id.buttonLayout);
+        mSaveLayout = findViewById(R.id.saveButtonLayout);
+
 
         mLogout = findViewById(R.id.logout);
         mRequest = findViewById(R.id.request);
@@ -139,6 +143,9 @@ public class CustomerMapActivity extends FragmentActivity implements OnMapReadyC
         mDriverName = findViewById(R.id.driverName);
         mDriverPhone = findViewById(R.id.driverPhone);
         mDriverCar = findViewById(R.id.driverCar);
+        mSaveRide = findViewById(R.id.completeRide);
+
+        mRatingBar = findViewById(R.id.rating_bar);
 
 
         mLogout.setOnClickListener(new View.OnClickListener() {
@@ -395,6 +402,18 @@ public class CustomerMapActivity extends FragmentActivity implements OnMapReadyC
                     }else{
                         mDriverProfileImage.setImageResource(R.mipmap.ic_default_driver);
                     }
+
+                    int ratingSum = 0;
+                    int ratingsTotal = 0;
+                    for(DataSnapshot child : snapshot.child("rating").getChildren()){
+                        ratingSum += Integer.valueOf(child.getValue().toString());
+                        ratingsTotal += 1;
+                    }
+
+                    if(ratingsTotal != 0) {
+                        mRatingBar.setRating((float)ratingSum/ratingsTotal);
+                    }
+
                     mDriverName.setText(mDriverNameField);
                     mDriverPhone.setText(String.valueOf(mDriverPhoneField));
                     mDriverCar.setText(mDriverCarField);

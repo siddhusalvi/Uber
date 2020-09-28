@@ -6,6 +6,9 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import android.os.Bundle;
+import android.view.View;
+import android.widget.TextView;
+import android.widget.Toast;
 
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DataSnapshot;
@@ -29,6 +32,8 @@ public class HistoryActivity extends AppCompatActivity {
     RecyclerView.Adapter mHistoryAdapter;
     RecyclerView.LayoutManager mHistoryLayoutManager;
     ArrayList resultHistory = new ArrayList<HistoryObject>();
+    TextView mbalence;
+    double balence = 0;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -49,9 +54,14 @@ public class HistoryActivity extends AppCompatActivity {
 
         customerOrDriver = getIntent().getExtras().getString("customerOrDriver");
 
+        mbalence = findViewById(R.id.balence);
+
         userId = FirebaseAuth.getInstance().getCurrentUser().getUid();
         getUserHistoryIds();
 
+        if(customerOrDriver.equals("Drivers")){
+            mbalence.setVisibility(View.VISIBLE);
+        }
 
         mHistoryAdapter.notifyDataSetChanged();
     }
@@ -67,12 +77,9 @@ public class HistoryActivity extends AppCompatActivity {
                     }
                 }
             }
-
-
             @Override
             public void onCancelled(@NonNull DatabaseError error) {
-
-            }
+             }
         });
     }
 
@@ -85,11 +92,28 @@ public class HistoryActivity extends AppCompatActivity {
                 if(snapshot.exists()){
                     String userId = snapshot.getKey();
                     Long timestamp = 0L;
+                    String distance;
+                    Double ridePrice = 0.0;
+
                     for(DataSnapshot child :snapshot.getChildren()){
                         if(child.getKey().equals("timestamp")){
                             timestamp = Long.valueOf(child.getValue().toString());
                         }
                     }
+
+                    if(snapshot.child("customerPaid") != null && snapshot.child("driverPaidout") == null){
+                        if(snapshot.child("distance") != null){
+                            distance = snapshot.child("distance").getValue().toString();
+                            ridePrice = Double.valueOf(distance) * 0.4;
+                            balence += ridePrice;
+                            mbalence.setText("Balence"+String.valueOf(balence));
+                        }
+                    }
+
+
+
+
+
                     HistoryObject obj = new HistoryObject(userId,getDate(timestamp) );
                     resultHistory.add(obj);
                     mHistoryAdapter.notifyDataSetChanged();
